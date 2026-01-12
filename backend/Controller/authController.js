@@ -14,32 +14,52 @@ const createToken=(name,id )=>
          })
     }
 exports.signup = async (req, res) => {
-  console.log(req.body); 
+    console.log(req.body); 
+    
     try {
-        const { name,email,role,password,confirmPassword,age,birthdate,gender}= req.body
+        const { name, email, role, password, confirmPassword, age, birthdate, gender } = req.body;
+        
+        // 1. Vérifier si l'utilisateur existe déjà par e-mail
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            // Si l'utilisateur existe, renvoyer une erreur 409 Conflict ou 400 Bad Request.
+            // 409 est souvent préférable pour les conflits d'unicité.
+            return res.status(409).json({
+                status: "fail",
+                message: "Cette adresse e-mail est déjà utilisée.",
+            });
+        }
+
+        // 2. Si l'e-mail est unique, procéder à la création
         console.log("create ");
         const newUser = await User.create({
+            name, 
+            email,
+            role,
+            password,
+            confirmPassword,
+            age,
+            birthdate,
+            gender
+        });
+
+        // 3. Réponse de succès
+        res.status(201).json({
+            status: "success",
+            data: { 
+                user: newUser 
+            }, // Renommé newUser à user par convention
+        });
         
-        name , 
-        email,
-        role,
-        password ,
-        confirmPassword,
-        age ,
-        birthdate,
-        gender
-    });
-      res.status(201).json({
-        status: "success",
-        data: { newUser },
-      });
     } catch (err) {
-      res.status(400).json({
-        status: "fail ",
-        message: err,
-      });
+        // Gérer les autres erreurs (validation Mongoose, problèmes de connexion DB, etc.)
+        res.status(400).json({
+            status: "fail",
+            message: err.message || "Une erreur inattendue est survenue.", // Utilisez err.message pour un message plus clair
+        });
     }
-  };
+};
   
   exports.login = async (req, res) => {
     try {

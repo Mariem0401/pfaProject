@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaTrash, FaPlus, FaMinus, FaArrowLeft,FaShoppingBasket  } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaMinus, FaArrowLeft, FaShoppingBasket } from 'react-icons/fa';
 import { useCart } from './CartContext';
 import UserLayout from '../../layouts/user/UserLayout';
 
@@ -16,9 +16,22 @@ const CartPage = () => {
 
   const [localQuantities, setLocalQuantities] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // SOLUTION URGENTE : Charger le panier au montage
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        await refreshCart();
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+    loadCart();
+  }, []);
 
   // Initialiser les quantités locales
-  React.useEffect(() => {
+  useEffect(() => {
     if (cart?.items) {
       const quantities = {};
       cart.items.forEach(item => {
@@ -56,19 +69,25 @@ const CartPage = () => {
   };
 
   const handleClearCart = async () => {
-    await clearUserCart();
-    await refreshCart(); // Rafraîchir le panier après l'avoir vidé
+    if (window.confirm("Êtes-vous sûr de vouloir vider le panier ?")) {
+      await clearUserCart();
+      await refreshCart();
+    }
   };
 
-  if (loading) return (
-    <UserLayout>
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
-      </div>
-    </UserLayout>
-  );
+  // MODIFICATION : Vérifier aussi isInitialLoading
+  if (loading || isInitialLoading) {
+    return (
+      <UserLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        </div>
+      </UserLayout>
+    );
+  }
 
-  if (!cart || cart.items.length === 0) {
+  // MODIFICATION : Vérifier aussi cart.items
+  if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <UserLayout>
         <div className="text-center py-16">
@@ -94,24 +113,23 @@ const CartPage = () => {
   return (
     <UserLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link
-                 to="/shop"
-                 className="inline-flex items-center text-teal-600 hover:text-teal-800 font-medium"
-               >
-                 <FaArrowLeft className="mr-2" /> Retour au boutique
-               </Link>
+        <Link
+          to="/shop"
+          className="inline-flex items-center text-teal-600 hover:text-teal-800 font-medium"
+        >
+          <FaArrowLeft className="mr-2" /> Retour au boutique
+        </Link>
         <div className="flex flex-col md:flex-row gap-8">
           {/* Liste des produits */}
           <div className="md:w-2/3">
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-       
               <div className="p-6 border-b border-gray-100">
                 <h1 className="text-2xl font-bold text-gray-800">Votre Panier ({cart.items.length})</h1>
               </div>
               
               <div className="divide-y divide-gray-100">
                 {cart.items.map(item => (
-                  <div key={item.product._id} className="p-6">
+                  <div key={item.product._id} className="p-6 cart-item">
                     <div className="flex flex-col sm:flex-row gap-6">
                       <div className="flex-shrink-0">
                         <img 

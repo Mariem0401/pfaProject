@@ -130,7 +130,7 @@ const CreerAnnonce = () => {
     data.append('type', formData.type);
     data.append('image', formData.image);
 
-    if (["garde_temporaire", "conseil_sante", "adoption"].includes(formData.type) && selectedAnimalId) {
+    if (["garde_temporaire", "conseil_sante", "adoption","animal perdu"].includes(formData.type) && selectedAnimalId) {
       data.append('animalId', selectedAnimalId);
     }
 
